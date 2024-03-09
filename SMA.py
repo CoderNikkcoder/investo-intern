@@ -11,7 +11,7 @@ mydb = pymysql.connect(
 )
 db_cursor = mydb.cursor()
 
-df = pd.read_excel("C:\\Users\\HP\\OneDrive\\Desktop\\AssHINDALCO_1D.xlsx")
+df = pd.read_excel("Data.xlsx")
 
 for index, row in df.iterrows():
     datetime_val = row['datetime'].date()
