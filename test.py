@@ -5,7 +5,7 @@ import datetime
 class TestTickData(unittest.TestCase):
     def test_values(self):
        
-        df = pd.read_excel('C:\\Users\\HP\\OneDrive\\Desktop\\AssHINDALCO_1D.xlsx')
+        df = pd.read_excel('Data.xlsx')
 
         for index, row in df.iterrows():
             
