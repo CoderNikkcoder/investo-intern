@@ -11,7 +11,7 @@ mydb = pymysql.connect(
 )
 db_cursor = mydb.cursor()
 
-df = pd.read_excel("Data.xlsx")
+df = pd.read_excel("Data.xlsx") #give file path where your .xlsx file is save
 
 for index, row in df.iterrows():
     datetime_val = row['datetime'].date()
