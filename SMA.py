@@ -11,7 +11,7 @@ mydb = pymysql.connect(
 )
 db_cursor = mydb.cursor()
 
-df = pd.read_excel("Data.xlsx")
+df = pd.read_excel("C:\\Users\\HP\\OneDrive\\Desktop\\AssHINDALCO_1D.xlsx")
 
 for index, row in df.iterrows():
     datetime_val = row['datetime'].date()
@@ -24,42 +24,25 @@ for index, row in df.iterrows():
     
     sql = "INSERT INTO HINDALCO_DATA (datetime, close, high, low, open, volume, instrument) VALUES (%s, %s, %s, %s, %s, %s, %s)"
     values = (datetime_val, close, high, low, open_val, volume, instrument)
-    db_cursor.execute(sql, values)
-  
-sql_query = "SELECT * FROM HINDALCO_DATA"
-
-df = pd.read_sql(sql_query, mydb)
-mydb.commit()
-db_cursor.close()
-mydb.close()
-
-df.sort_values(by='datetime', inplace=True)
-df.reset_index(drop=True, inplace=True)
-print(df)
-
+    
 def SMA(data, period=30, column='close'):  
-    return data[column].rolling(window=period).mean()
-
-
-df['SMA100'] = SMA(df, 100)
-df['SMA400'] = SMA(df, 400)
-
-
-df['Signal'] = np.where(df['SMA100'] > df['SMA400'], 1, 0)
+    sma = data[column].rolling(window=period, min_periods=1).mean()
+    return sma
+df['SMA50'] = SMA(df, 50)
+df['SMA200'] = SMA(df, 200)
+df['Signal'] = np.where(df['SMA50'] > df['SMA200'], 1, 0)
 df['Position'] = df['Signal'].diff()
 
 df['Buy'] = np.where(df['Position'] == 1, df['close'], np.nan)
 df['Sell'] = np.where(df['Position'] == -1, df['close'], np.nan)
-
-
 buy_signals = df[df['Position'] == 1]
 sell_signals = df[df['Position'] == -1]
 
 plt.figure(figsize=(10, 5))
 plt.title('HINDALCO - SMA Crossover', fontsize=18)
-plt.plot(df['datetime'], df['close'], alpha=0.5, label='Close',color='blue')
-plt.plot(df['datetime'], df['SMA100'], alpha=0.7, label='SMA100', linestyle = '--',color='green')
-plt.plot(df['datetime'], df['SMA400'], alpha=0.7, label='SMA400', linestyle = '--',color='red')
+plt.plot(df['datetime'], df['close'], alpha=0.5, label='Close',color='grey')
+plt.plot(df['datetime'], df['SMA50'], alpha=1, label='SMA50', color='red')
+plt.plot(df['datetime'], df['SMA200'], alpha=1, label='SMA200', color='green')
 plt.scatter(buy_signals['datetime'], buy_signals['close'], alpha=1, label='Buy Signal', marker='^', color='green')
 plt.scatter(sell_signals['datetime'], sell_signals['close'], alpha=1, label='Sell Signal', marker='v', color='red')
 plt.xlabel('datetime', fontsize=10)
