@@ -30,14 +30,17 @@ Steps
 
 Usage
 
-    ```pip install -r requirements.txt``` 
+    pip install -r requirements.txt
 
-#Testing
+Testing
 
 Test data file for valid data types:
 
       python3 -m unittest
 
 Result:
+
+
 ![SMA_output](https://github.com/CoderNikkcoder/investo-intern/assets/159905764/46b140c8-123e-47f1-956b-0560a1ce390b)
 
+Using SMA strategy 50-day and 100-day moving averages
