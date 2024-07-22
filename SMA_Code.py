@@ -1,53 +1,42 @@
 import pandas as pd
-import pymysql
-import numpy as np
 import matplotlib.pyplot as plt
 
-mydb = pymysql.connect(
-    host="127.0.0.1",
-    user="root",
-    password="369852147",
-    database="INVESTO_DATA"
-)
-db_cursor = mydb.cursor()
+# Load your data into a Pandas dataframe
+df = pd.read_xlsx(r"Data.xlsx")
 
-df = pd.read_excel("Data.xlsx") #give file path where your .xlsx file is save
+# Convert the 'Date' column to datetime format
+df['Date'] = pd.to_datetime(df['Date'], dayfirst=True)
 
-for index, row in df.iterrows():
-    datetime_val = row['datetime'].date()
-    close = float(row['close'])
-    high = float(row['high'])
-    low = float(row['low'])
-    open_val = float(row['open'])
-    volume = int(row['volume'])
-    instrument = row['instrument']
-    
-    sql = "INSERT INTO HINDALCO_DATA (datetime, close, high, low, open, volume, instrument) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-    values = (datetime_val, close, high, low, open_val, volume, instrument)
-    
-def SMA(data, period=30, column='close'):  
-    sma = data[column].rolling(window=period, min_periods=1).mean()
-    return sma
-df['SMA50'] = SMA(df, 50)
-df['SMA200'] = SMA(df, 200)
-df['Signal'] = np.where(df['SMA50'] > df['SMA200'], 1, 0)
-df['Position'] = df['Signal'].diff()
+# Calculate the 50-day and 200-day simple moving averages
+df['SMA_50'] = df['Close'].rolling(window=50).mean()
+df['SMA_200'] = df['Close'].rolling(window=200).mean()
 
-df['Buy'] = np.where(df['Position'] == 1, df['close'], np.nan)
-df['Sell'] = np.where(df['Position'] == -1, df['close'], np.nan)
-buy_signals = df[df['Position'] == 1]
-sell_signals = df[df['Position'] == -1]
+# Create a new column to store the buy/sell signals
+df['Signal'] = 0
 
-plt.figure(figsize=(10, 5))
-plt.title('HINDALCO - SMA Crossover', fontsize=18)
-plt.plot(df['datetime'], df['close'], alpha=0.5, label='Close',color='grey')
-plt.plot(df['datetime'], df['SMA50'], alpha=1, label='SMA50', color='red')
-plt.plot(df['datetime'], df['SMA200'], alpha=1, label='SMA200', color='green')
-plt.scatter(buy_signals['datetime'], buy_signals['close'], alpha=1, label='Buy Signal', marker='^', color='green')
-plt.scatter(sell_signals['datetime'], sell_signals['close'], alpha=1, label='Sell Signal', marker='v', color='red')
-plt.xlabel('datetime', fontsize=10)
-plt.ylabel('Close Price', fontsize=10)
-plt.legend()
-plt.grid(True)  
+# Generate buy/sell signals based on the SMA crossover
+for i in range(1, len(df)):
+    if df['SMA_50'].iloc[i] > df['SMA_200'].iloc[i] and df['SMA_50'].iloc[i-1] <= df['SMA_200'].iloc[i-1]:
+        df['Signal'].iloc[i] = 1  # Buy signal
+    elif df['SMA_50'].iloc[i] < df['SMA_200'].iloc[i] and df['SMA_50'].iloc[i-1] >= df['SMA_200'].iloc[i-1]:
+        df['Signal'].iloc[i] = -1  # Sell signal
+
+# Plot the close price, SMA_50, and SMA_200
+plt.plot(df['Date'], df['Close'], label='Close Price')
+plt.plot(df['Date'], df['SMA_50'], label='SMA_50')
+plt.plot(df['Date'], df['SMA_200'], label='SMA_200')
+
+# Plot the buy/sell signals
+plt.plot(df.loc[df['Signal'] == 1, 'Date'], df.loc[df['Signal'] == 1, 'Close'], 'g^', label='Buy', markersize=10)
+plt.plot(df.loc[df['Signal'] == -1, 'Date'], df.loc[df['Signal'] == -1, 'Close'], 'rv', label='Sell', markersize=10)
+
+# Set the title and labels
+plt.title('SMA Crossover Signals')
+plt.xlabel('Date')
+plt.ylabel('Price')
+
+# Show the legend
+plt.legend(loc='best')
+
+# Show the plot
 plt.show()
-
